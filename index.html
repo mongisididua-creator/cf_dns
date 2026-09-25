@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>CF DNS Manager</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-logo cf">CF</div>
+      <span class="badge orange">ADMIN LOGIN</span>
+      <h1>CF DNS Manager</h1>
+      <p>Kelola DNS Cloudflare dari satu panel.</p>
+
+      <form id="adminLoginForm">
+        <label>Password Admin</label>
+        <div class="password-wrap">
+          <input id="adminPasswordInput" type="password" required autocomplete="current-password" placeholder="Masukkan password admin">
+          <button id="togglePassword" type="button" title="Tampilkan password">👁</button>
+        </div>
+        <button class="btn btn-primary btn-block" id="adminLoginBtn" type="submit">Masuk sebagai Admin</button>
+      </form>
+
+      <div class="auth-note" id="authNote"></div>
+    </div>
+  </div>
+
+  <div id="app" class="app-shell app-locked">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark cf">CF</div>
+        <div><strong>CF DNS</strong><span>Manager</span></div>
+      </div>
+
+      <nav>
+        <button class="nav-item active" data-view="dashboard"><span>⌂</span>Dashboard</button>
+        <button class="nav-item" data-view="records"><span>◫</span>DNS Records</button>
+        <button class="nav-item" data-view="published"><span>↗</span>Published Applications</button>
+        <button class="nav-item" data-view="settings"><span>⚙</span>Pengaturan</button>
+      </nav>
+    </aside>
+
+    <section class="content-shell">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu" id="mobileMenu">☰</button>
+          <div>
+            <h1 id="pageTitle">Dashboard</h1>
+            <p id="pageSubtitle">Kelola DNS Cloudflare.</p>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <div class="zone-picker">
+            <span>Zone</span>
+            <select id="zoneSelect"><option value="">Memuat...</option></select>
+          </div>
+          <button class="icon-btn" id="refreshBtn" title="Muat ulang">↻</button>
+          <button class="icon-btn" id="logoutBtn" title="Keluar">⇥</button>
+          <div class="profile">
+            <div class="avatar cf">CF</div>
+            <div><strong>Cloudflare</strong><span id="profileZone">DNS Manager</span></div>
+          </div>
+        </div>
+      </header>
+
+      <main class="main">
+        <section class="view active" id="view-dashboard">
+          <div class="hero cf-hero">
+            <div>
+              <span class="badge dark orange-dark">DNS + PUBLISHED APPLICATIONS</span>
+              <h2>Kelola DNS dan aplikasi publik Cloudflare Tunnel.</h2>
+              <p>DNS record dan Published Application Routes dalam satu dashboard.</p>
+            </div>
+            <button class="btn btn-light btn-lg" data-open-record>+ Tambah DNS</button>
+          </div>
+
+          <div class="stats">
+            <article><span>Zone</span><strong id="statZones">—</strong><small>Domain tersedia</small></article>
+            <article><span>DNS Record</span><strong id="statRecords">—</strong><small>Pada zone aktif</small></article>
+            <article><span>Tunnel</span><strong id="statTunnels">—</strong><small>Remote-managed</small></article>
+            <article><span>Published Apps</span><strong id="statPublished">—</strong><small>Pada tunnel aktif</small></article>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div><h3>DNS Record Terbaru</h3><p id="recentZoneLabel">Zone aktif.</p></div>
+              <button class="text-btn orange-text" data-view-link="records">Lihat semua →</button>
+            </div>
+            <div id="recentRecords" class="repo-list"><div class="loading-row">Memuat...</div></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-records">
+          <div class="toolbar">
+            <div class="search">
+              <span>⌕</span>
+              <input id="recordSearch" type="search" placeholder="Cari nama, target, atau tipe DNS...">
+            </div>
+
+            <div class="toolbar-actions">
+              <select id="typeFilter" class="compact-select">
+                <option value="">Semua tipe</option>
+                <option value="A">A</option>
+                <option value="AAAA">AAAA</option>
+                <option value="CNAME">CNAME</option>
+              </select>
+              <button class="btn btn-primary" data-open-record>+ Tambah DNS</button>
+            </div>
+          </div>
+
+          <div class="panel no-pad">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nama DNS</th>
+                    <th>Tipe</th>
+                    <th>Target</th>
+                    <th>TTL</th>
+                    <th>Proxy</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="recordTableBody">
+                  <tr><td colspan="6" class="center">Memuat...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <section class="view" id="view-published">
+          <div class="published-top">
+            <div class="published-tunnel-card">
+              <div><span class="mini-label">CLOUDFLARE TUNNEL</span><h3>Published Application Routes</h3><p>Petakan hostname publik ke service lokal di belakang cloudflared.</p></div>
+              <div class="published-tunnel-select"><label>Tunnel</label><select id="tunnelSelect"><option value="">Memuat tunnel...</option></select></div>
+            </div>
+            <div class="published-summary">
+              <div><span>Tunnel Status</span><strong id="activeTunnelStatus">—</strong></div>
+              <div><span>Published Apps</span><strong id="publishedCount">0</strong></div>
+              <button class="btn btn-primary" id="addPublishedBtn">+ Tambah Published App</button>
+            </div>
+          </div>
+          <div class="panel no-pad"><div class="table-wrap"><table><thead><tr><th>Public Hostname</th><th>Service URL</th><th>Path</th><th>DNS</th><th></th></tr></thead><tbody id="publishedTableBody"><tr><td colspan="5" class="center">Pilih tunnel.</td></tr></tbody></table></div></div>
+        </section>
+
+        <section class="view" id="view-settings">
+          <div class="settings-grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div><h3>Koneksi Backend</h3><p>Status Cloudflare API melalui Apps Script.</p></div>
+                <span id="connectionPill" class="status neutral">Memeriksa...</span>
+              </div>
+
+              <div class="setting-row"><span>Cloudflare Token</span><strong id="tokenStatus">—</strong></div>
+              <div class="setting-row"><span>Password Admin</span><strong>Sudah diatur</strong></div>
+              <div class="setting-row"><span>Jumlah Zone</span><strong id="zoneCountSetting">—</strong></div>
+              <div class="setting-row"><span>Zone Aktif</span><strong id="activeZoneSetting">—</strong></div>
+              <div class="setting-row"><span>Cloudflare Account</span><strong id="accountStatus">—</strong></div>
+              <div class="setting-row"><span>Cloudflare Tunnel</span><strong id="tunnelPermissionStatus">—</strong></div>
+
+              <div id="tunnelDiagnostic" class="diagnostic">
+                Belum ada hasil pemeriksaan tunnel.
+              </div>
+
+              <div class="setting-actions">
+                <button class="btn" id="testConnectionBtn">Tes Koneksi DNS</button>
+                <button class="btn" id="reloadTunnelBtn">Muat Ulang Tunnel</button>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3>Pembagian File</h3>
+              <p class="muted">Bentuknya mengikuti GitPage Manager: seluruh antarmuka ada di GitHub, sedangkan Apps Script hanya menjadi backend.</p>
+              <div class="code-list">
+                <code>index.html</code>
+                <code>style.css</code>
+                <code>config.js</code>
+                <code>app.js</code>
+                <code>Code.gs</code>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="recordModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <span class="badge orange" id="recordModalBadge">DNS RECORD BARU</span>
+          <h2 id="recordModalTitle">Tambah DNS Record</h2>
+        </div>
+        <button class="modal-close" data-close-modal="recordModal">×</button>
+      </div>
+
+      <form id="recordForm">
+        <div class="field">
+          <label>Zone</label>
+          <select id="recordZoneSelect" disabled></select>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label>Nama / Subdomain</label>
+            <div class="host-input">
+              <input id="recordHost" type="text" required placeholder="blog">
+              <span id="hostSuffix">.domainanda.id</span>
+            </div>
+            <small>Gunakan <b>@</b> untuk root domain. Boleh juga mengisi subdomain bertingkat seperti <b>api.v2</b>.</small>
+          </div>
+
+          <div class="field">
+            <label>Tipe DNS</label>
+            <select id="recordType">
+              <option value="A">A — IPv4</option>
+              <option value="AAAA">AAAA — IPv6</option>
+              <option value="CNAME">CNAME — Alias</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label id="targetLabel">Target IPv4</label>
+          <input id="recordTarget" type="text" required placeholder="192.0.2.10">
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label>TTL</label>
+            <select id="recordTtl">
+              <option value="1">Automatic</option>
+              <option value="60">1 Menit</option>
+              <option value="120">2 Menit</option>
+              <option value="300">5 Menit</option>
+              <option value="3600">1 Jam</option>
+            </select>
+          </div>
+
+          <div class="proxy-box">
+            <div>
+              <strong>Cloudflare Proxy</strong>
+              <small>Orange-cloud / proxied</small>
+            </div>
+            <label class="switch">
+              <input id="recordProxied" type="checkbox" checked>
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" type="button" data-close-modal="recordModal">Batal</button>
+          <button class="btn btn-primary" id="saveRecordBtn" type="submit">Simpan DNS</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <div class="modal-backdrop" id="publishedModal">
+    <div class="modal">
+      <div class="modal-head"><div><span class="badge orange" id="publishedModalBadge">PUBLISHED APPLICATION</span><h2 id="publishedModalTitle">Tambah Published Application</h2></div><button class="modal-close" data-close-modal="publishedModal">×</button></div>
+      <form id="publishedForm">
+        <div class="field"><label>Tunnel</label><select id="publishedTunnelSelect" disabled></select></div>
+        <div class="grid2">
+          <div class="field"><label>Subdomain / Hostname</label><div class="host-input"><input id="publishedHost" type="text" required placeholder="erapor"><span id="publishedZoneSuffix">.domainanda.id</span></div><small>Contoh: <b>erapor</b>, <b>dapodik</b>, atau <b>@</b>.</small></div>
+          <div class="field"><label>Domain / Zone</label><select id="publishedZoneSelect"></select></div>
+        </div>
+        <div class="field"><label>Service URL</label><input id="publishedService" type="text" required placeholder="http://localhost:8080"><small>Contoh: http://localhost:8080, http://192.168.1.10:80, https://localhost:443.</small></div>
+        <div class="field"><label>Path <span class="optional">(opsional)</span></label><input id="publishedPath" type="text" placeholder="/admin/*"><small>Kosongkan untuk seluruh hostname.</small></div>
+        <div class="published-info"><strong>DNS otomatis</strong><span>Aplikasi akan membuat/menjaga CNAME proxied ke <code>&lt;tunnel-id&gt;.cfargotunnel.com</code>.</span></div>
+        <div class="modal-actions"><button class="btn" type="button" data-close-modal="publishedModal">Batal</button><button class="btn btn-primary" id="savePublishedBtn" type="submit">Simpan Route</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="deleteModal">
+    <div class="modal modal-small">
+      <div class="danger-symbol">!</div>
+      <h2 id="deleteTitle">Hapus Data?</h2>
+      <p id="deleteMessage">Record ini akan dihapus dari Cloudflare.</p>
+      <div class="modal-actions center-actions">
+        <button class="btn" data-close-modal="deleteModal">Batal</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">Hapus Permanen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastStack" class="toast-stack"></div>
+  <div id="loadingOverlay" class="overlay">
+    <div class="spinner"></div>
+    <strong id="loadingText">Memproses...</strong>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
